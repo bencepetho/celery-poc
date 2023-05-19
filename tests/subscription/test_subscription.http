@@ -1,0 +1,53 @@
+POST http://127.0.0.1:8000/subscribe/hello1
+Content-Type: application/json
+
+{
+  "duration": 1,
+  "webhook_url": "https://webhook.site/bd8ae5e8-e20d-4132-8695-eab2a4cb9a20"
+}
+
+> {%
+    client.test("Response status code is as expected", function () {
+        client.assert(response.status == 200, "Response status is not 200");
+    })
+    client.log("Tests Passed")
+%}
+
+###
+
+
+
+POST http://127.0.0.1:8000/subscribe/hello5
+Content-Type: application/json
+
+{
+  "duration": 5,
+  "webhook_url": "https://webhook.site/bd8ae5e8-e20d-4132-8695-eab2a4cb9a20"
+}
+
+> {%
+    client.test("Response status code is as expected", function () {
+        client.assert(response.status == 200, "Response status is not 200");
+    })
+    client.log("Tests Passed")
+%}
+
+###
+
+
+
+POST http://127.0.0.1:8000/subscribe/hello20
+Content-Type: application/json
+
+{
+  "webhook_url": "https://webhook.site/bd8ae5e8-e20d-4132-8695-eab2a4cb9a20"
+}
+
+> {%
+    client.test("Response status code is as expected", function () {
+        client.assert(response.status == 200, "Response status is not 200");
+    })
+    client.log("Tests Passed")
+%}
+
+###
