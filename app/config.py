@@ -2,6 +2,7 @@ import logging
 import sys
 from functools import lru_cache
 
+from dotenv import find_dotenv
 from pydantic import BaseSettings
 
 from app.constants import LOGGER_FORMAT, LOGGER_DEBUG_FORMAT
@@ -34,7 +35,8 @@ class Settings(BaseSettings):
     class Config:
         case_sensitive = True
         env_prefix = "POC_"
-        env_file = ".env"
+        env_file = find_dotenv(".env")
+        env_file_encoding = "utf-8"
 
 
 @lru_cache()
