@@ -1,6 +1,7 @@
 import datetime
+from typing import Any
 
-from pydantic import BaseModel, Field, HttpUrl, validator
+from pydantic import BaseModel, Field, HttpUrl, validator, UUID4
 from starlette.status import HTTP_200_OK
 
 
@@ -31,7 +32,19 @@ class Subscription(BaseModel):
         return v
 
 
-class SubscriptionCreated(BaseModel):
-    task_id: int = Field(
-        title="Task ID", description="The ID of the created subscription task"
+class SubscriptionTask(BaseModel):
+    task_id: UUID4 = Field(
+        title="Task ID",
+        description="The ID of the created subscription task",
+    )
+
+
+class SubscriptionStatus(SubscriptionTask):
+    task_status: str = Field(
+        title="Task Status",
+        description="The status of the created subscription task",
+    )
+    task_result: Any = Field(
+        title="Task Result",
+        description="The result of the created subscription task",
     )

@@ -51,3 +51,6 @@ Content-Type: application/json
 %}
 
 ###
+
+GET {{host}}:{{port}}/subscribe/hello1/7795bfcd-a827-4e54-93ad-c097579b05e5
+Content-Type: application/json

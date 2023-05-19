@@ -1,0 +1,50 @@
+version: "3.8"
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    env_file:
+      - .env
+    ports:
+      - "8000:${POC_APP_PORT}"
+    depends_on:
+      - redis
+
+
+  worker:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    environment:
+      - C_FORCE_ROOT=true
+    env_file:
+      - .env
+    entrypoint: [
+      "celery", "-A", "app.main.celery",
+      "--broker=${POC_CELERY_BROKER}",
+      "--result-backend=${POC_CELERY_RESULT_BACKEND}",
+      "worker"
+    ]
+    depends_on:
+      - redis
+      - app
+
+  flower:
+    image: mher/flower
+    env_file:
+      - .env
+    entrypoint: [
+      "celery",
+      "--broker=${POC_CELERY_BROKER}",
+      "--result-backend=${POC_CELERY_RESULT_BACKEND}",
+      "flower", "--port=${POC_CELERY_FLOWER_PORT}"
+    ]
+    ports:
+      - "5555:${POC_CELERY_FLOWER_PORT}"
+    depends_on:
+      - redis
+
+  redis:
+    image: redis:latest

@@ -30,6 +30,7 @@ class Settings(BaseSettings):
     LOGGER_LEVEL: int | str = logging.INFO
     LOGGER_FORMAT: str | None = None
 
+    # Todo figure out why log level is INFO in case of DEBUG .env value
     @validator("LOGGER_FORMAT", pre=True)
     def set_format(cls, _, values: dict[str, Any]) -> str:
         if get_log_level(values["LOGGER_LEVEL"]) < logging.INFO:

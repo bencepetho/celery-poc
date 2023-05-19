@@ -4,16 +4,15 @@ import json
 import time
 
 import httpx
-from pydantic import HttpUrl
+from celery import shared_task
+from celery.utils.log import get_task_logger
 
-from app.config import get_app_logger
 from app.subscription.exceptions import WebhookError
-from app.subscription.schemas import Subscription
+
+logger = get_task_logger(__name__)
 
 
 async def _is_webhook_reachable(url: str) -> tuple[bool, Exception | None]:
-    logger = get_app_logger()
-
     try:
         async with httpx.AsyncClient() as client:
             await client.head(url)
@@ -31,9 +30,7 @@ async def _is_webhook_reachable(url: str) -> tuple[bool, Exception | None]:
         return True, None
 
 
-async def send_to_webhook(subscription_name: str, url: HttpUrl) -> httpx.Response:
-    logger = get_app_logger()
-
+async def _send_to_webhook(subscription_name: str, url: str) -> httpx.Response:
     async with httpx.AsyncClient() as client:
         data = {
             "subscription_name": subscription_name,
@@ -43,30 +40,45 @@ async def send_to_webhook(subscription_name: str, url: HttpUrl) -> httpx.Respons
         return await client.post(url, json=data)
 
 
-async def push_messages(
-    subscription_name: str,
-    payload: Subscription,
-):
-    logger = get_app_logger()
+def sync_async_executor(to_await):
+    async_response = []
 
-    reachable, error = await _is_webhook_reachable(payload.webhook_url)
+    async def run_and_capture_result():
+        r = await to_await
+        async_response.append(r)
+
+    loop = asyncio.get_event_loop()
+    coroutine = run_and_capture_result()
+    loop.run_until_complete(coroutine)
+    return async_response[0]
+
+
+@shared_task(bind=True, name="subscription.push_messages")
+def push_messages(
+    self,
+    subscription_name: str,
+    duration: int,
+    webhook_url: str,
+    expected_status: int,
+):
+    reachable, error = sync_async_executor(_is_webhook_reachable(webhook_url))
+
+    logger.info(self)
 
     if not reachable:
-        raise WebhookError(
-            f"The webhook at {payload.webhook_url} is not reachable"
-        ) from error
+        raise WebhookError(f"The webhook at {webhook_url} is not reachable") from error
 
     started_at = time.time()
 
-    while payload.duration.total_seconds() - (time.time() - started_at) > 0:
-        response = await send_to_webhook(subscription_name, payload.webhook_url)
+    while duration - (time.time() - started_at) > 0:
+        response = sync_async_executor(_send_to_webhook(subscription_name, webhook_url))
 
-        if response.status_code != payload.expected_status:
+        if response.status_code != expected_status:
             logger.debug(type(response.status_code))
-            logger.debug(type(payload.expected_status))
+            logger.debug(type(expected_status))
             raise WebhookError(
                 f"Webhook response status ({response.status_code}) is "
-                f"different from expected ({payload.expected_status})"
+                f"different from expected ({expected_status})"
             )
 
-        await asyncio.sleep(1)
+        sync_async_executor(asyncio.sleep(1))
