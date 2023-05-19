@@ -1,4 +1,4 @@
-POST http://127.0.0.1:8000/subscribe/hello1
+POST {{host}}:{{port}}/subscribe/hello1
 Content-Type: application/json
 
 {
@@ -17,7 +17,7 @@ Content-Type: application/json
 
 
 
-POST http://127.0.0.1:8000/subscribe/hello5
+POST {{host}}:{{port}}/subscribe/hello5
 Content-Type: application/json
 
 {
@@ -36,7 +36,7 @@ Content-Type: application/json
 
 
 
-POST http://127.0.0.1:8000/subscribe/hello20
+POST {{host}}:{{port}}/subscribe/hello20
 Content-Type: application/json
 
 {
