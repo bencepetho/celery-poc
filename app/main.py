@@ -1,6 +1,7 @@
 import uvicorn
 from fastapi import FastAPI
 
+from app.config import get_settings
 from app.subscription.router import router as subscription_router
 
 app = FastAPI()
@@ -14,4 +15,11 @@ async def root():
 
 
 if __name__ == "__main__":
-    uvicorn.run("app.main:app", host="0.0.0.0", port=8000, reload=True)
+    settings = get_settings()
+
+    uvicorn.run(
+        "app.main:app",
+        host="0.0.0.0",
+        port=settings.APP_PORT,
+        reload=True,
+    )

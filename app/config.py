@@ -1,15 +1,15 @@
 import logging
 import sys
 from functools import lru_cache
+from typing import Any
 
 from dotenv import find_dotenv
-from pydantic import BaseSettings
+from pydantic import BaseSettings, validator
 
 from app.constants import LOGGER_FORMAT, LOGGER_DEBUG_FORMAT
 
 
 def get_log_level(level: int | str) -> int:
-    print(f"Getting log level for {level}")
     if isinstance(level, int):
         return level
 
@@ -21,19 +21,26 @@ def get_log_level(level: int | str) -> int:
 
 
 class Settings(BaseSettings):
+    APP_PORT: int = 8000
+
     CELERY_BROKER: str = "redis://redis:6379"
     CELERY_RESULT_BACKEND: str = "redis://redis:6379"
 
     LOGGER_NAME: str = "celery-poc"
     LOGGER_LEVEL: int | str = logging.INFO
-    LOGGER_FORMAT: str = (
-        LOGGER_DEBUG_FORMAT
-        if get_log_level(LOGGER_LEVEL) < logging.INFO
-        else LOGGER_FORMAT
-    )
+    LOGGER_FORMAT: str | None = None
+
+    @validator("LOGGER_FORMAT", pre=True)
+    def set_format(cls, _, values: dict[str, Any]) -> str:
+        if get_log_level(values["LOGGER_LEVEL"]) < logging.INFO:
+            return LOGGER_DEBUG_FORMAT
+
+        else:
+            return LOGGER_FORMAT
 
     class Config:
         case_sensitive = True
+        extra = "forbid"
         env_prefix = "POC_"
         env_file = find_dotenv(".env")
         env_file_encoding = "utf-8"
@@ -41,7 +48,6 @@ class Settings(BaseSettings):
 
 @lru_cache()
 def get_settings() -> Settings:
-    print("Got settings")
     return Settings()
 
 

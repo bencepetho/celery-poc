@@ -19,7 +19,9 @@ RUN poetry config virtualenvs.create false && \
 
 FROM dependencies AS app
 
+ENV PYTHONPATH=/
+
 COPY ./.env.example /app/.env
 COPY ./app /app/
 
-ENTRYPOINT ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
+ENTRYPOINT ["python", "/app/main.py"]
